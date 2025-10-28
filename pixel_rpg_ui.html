@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,6 +94,18 @@
   .btn.focus{
     box-shadow: 0 0 0 6px #fff inset;
   }
+
+  /* Controls image (bottom-right) */
+  .controls-img{
+  position: absolute;
+  right: 22px;         /* distance from right edge */
+  bottom: 22px;        /* distance from bottom edge */
+  width: 210px;        /* change to resize */
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 #000);
+  user-select: none;
+  pointer-events: none; /* ignore clicks so keyboard-only still feels natural */
+}
 
   /* Settings rock (top-right) */
   .rock{
@@ -292,17 +305,16 @@
       <div class="btn short" id="btn-credits" style="top: 340px;">CREDITS</div>
       <div class="rock" id="btn-settings" title="Settings (Rock)"></div>
 
-      <div class="controls">
-        <div class="label">CONTROLS</div>
-        <div class="keys" style="grid-template-columns: 1fr 1fr 1fr;">
-          <div></div><div class="key">W</div><div></div>
-        </div>
+        <img class="controls-img" src="control.png" alt="Controls: WASD + Space">
+
         <div class="row">
           <div class="key">A</div><div class="key">S</div><div class="key">D</div>
         </div>
         <div class="space">SPACE</div>
       </div>
     </section>
+
+  
 
     <!-- SETTINGS PAGE -->
     <section class="page" id="page-settings" aria-label="Settings Page">
@@ -586,3 +598,4 @@ stage.addEventListener("blur", ()=> stage.focus());
 </script>
 </body>
 </html>
+
