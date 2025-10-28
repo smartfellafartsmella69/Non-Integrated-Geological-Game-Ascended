@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pixel RPG UI (HTML/CSS/JS)</title>
+<style>
+  /* =========================
+     THEME / "PIXEL" SETTINGS
+     ========================= */
+  :root{
+    --bg-main: url('bg_title.png'); 
+    --rock-img: url('rock.png'); 
+    --char1: url('char1.png');
+    --char2: url('char2.png');
+    --char3: url('char3.png');
+
+    --panel: #76533f;
+    --panel-dark: #4f2e21;
+    --ui-brown: #7d4d34;
+    --ui-brown-dark: #502e21;
+    --white: #f5f5f5;
+    --black: #0f0f0f;
+  }
+
+  /* baseline page */
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #222;
+    color: var(--white);
+    font-family: "Courier New", Consolas, monospace;
+    image-rendering: pixelated;
+  }
+
+  /* Scaled, “pixelated” stage: base size 400x225 x3 scale */
+  .stage-wrap{
+    display: grid;
+    place-items: center;
+    height: 100%;
+  }
+  .stage{
+    width: 1200px;  /* 400 * 3 */
+    height: 675px;  /* 225 * 3 */
+    transform: translateZ(0);
+    position: relative;
+    overflow: hidden;
+    border: 8px solid #111;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    background: #333;
+  }
+
+  /* Background (one image used on all pages) */
+  .stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: var(--bg-main);
+    background-size: cover;
+    background-position: center;
+    filter: brightness(var(--bg-brightness, 1));
+  }
+
+  /* Title text */
+  .title{
+    position: absolute;
+    top: 48px;
+    width: 100%;
+    text-align: center;
+    font-size: 48px;
+    letter-spacing: 2px;
+    text-shadow: 0 3px 0 #000;
+  }
+
+  /* Buttons */
+  .btn{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ui-brown);
+    border: 8px solid var(--ui-brown-dark);
+    border-radius: 18px;
+    text-align: center;
+    padding: 18px 24px;
+    width: 560px;     /* START longer */
+    font-size: 28px;
+    cursor: default;
+  }
+  .btn.short{
+    width: 460px;     /* CREDITS shorter */
+    font-size: 26px;
+  }
+  .btn.focus{
+    box-shadow: 0 0 0 6px #fff inset;
+  }
+
+  /* Settings rock (top-right) */
+  .rock{
+    position: absolute;
+    top: 22px; left: 22px;
+    width: 66px; height: 54px;
+    background-image: var(--rock-img);
+    background-size: 100px;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 3px 0 #000);
+  }
+  .rock.focus{
+    outline: 6px solid #fff;
+    outline-offset: 6px;
+    border-radius: 12px;
+  }
+
+  /* Controls hint block */
+  .controls{
+    position: absolute;
+    right: 28px; top: 140px;
+    width: 280px;
+    padding: 14px;
+    background: rgba(0,0,0,.45);
+    border: 4px solid var(--black);
+    border-radius: 12px;
+  }
+  .controls .label{
+    font-size: 18px; margin-bottom: 8px; text-align: center;
+  }
+  .keys{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; justify-items: center; }
+  .key{
+    width: 48px; height: 40px; display:grid; place-items:center;
+    background: #eee; color: #111; border: 4px solid #111; border-radius: 8px;
+    font-weight: 700; font-size: 18px;
+  }
+  .row {
+    margin-top: 6px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    justify-items: center;
+  }
+  .space{
+    width: 220px; height: 40px;
+    background: #eee; color: #111; border: 4px solid #111; border-radius: 8px;
+    font-weight: 700; font-size: 18px; display:grid; place-items:center;
+    margin: 12px auto 4px auto;
+  }
+
+  /* Shared header badge */
+  .hdr{
+    position:absolute; left:50%; transform:translateX(-50%);
+    top: 28px;
+    background: var(--ui-brown);
+    border: 6px solid var(--ui-brown-dark);
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 28px;
+  }
+
+  /* Panel block used in settings/credits */
+  .panel{
+    position:absolute;
+    left: 50%; transform: translateX(-50%);
+    top: 120px;
+    width: 760px;
+    height: 420px;
+    background: var(--panel);
+    border: 8px solid var(--panel-dark);
+    border-radius: 18px;
+  }
+
+  /* Slider */
+  .slider{
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    width: 640px;
+    height: 64px;
+    background: var(--ui-brown-dark);
+    border-radius: 16px;
+    top: var(--y);
+    border: 4px solid #000;
+  }
+  .slider .inner{
+    position: absolute; left: 14px; right: 14px; top: 14px; bottom: 14px;
+    background: #fff; border-radius: 12px;
+  }
+  .slider .knob{
+    position: absolute; top: -6px; width: 64px; height: 64px;
+    background-image: var(--rock-img);
+    background-size: 80% 80%;
+    background-position: center; background-repeat: no-repeat;
+    filter: drop-shadow(0 3px 0 #000);
+    transition: left 0.06s linear;
+  }
+  .slider.focus{ box-shadow: 0 0 0 6px #fff inset; }
+  .slider .label{
+    position: absolute; top: -36px; left: 6px; font-size: 22px;
+  }
+
+  /* Credits columns */
+  .cols{
+    position: absolute; inset: 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .col{
+    background: rgba(0,0,0,.25);
+    border: 4px solid #000;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 18px; line-height: 1.35;
+    white-space: pre-line;
+  }
+  .credits-foot{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom: 18px; font-size: 18px;
+  }
+
+  /* Character cards */
+  .char-grid{
+    position:absolute; left:40%; transform:translateX(-50%);
+    bottom: 145px; display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 26px; width: 600px;
+  }
+  .char-card {
+  position: relative;
+  width: 250px;   
+  height: 360px;  
+  background: #0a0a0a;
+  border-radius: 10px;
+  border: 4px solid #111;
+  overflow: hidden;
+  }
+  .char-card::before{
+    /* placeholder sprite area */
+    content:"";
+    position:absolute; inset: 25px 24px 24px 24px;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    filter: drop-shadow(0 6px 0 #000);
+  }
+  .char-0::before{ background-image: var(--char1); }
+  .char-1::before{ background-image: var(--char2); }
+  .char-2::before{ background-image: var(--char3); }
+  .char-card.focus{ box-shadow: 0 0 0 6px #fff inset; }
+
+  .char-hdr{
+    position:absolute; left:50%; transform:translateX(-50%);
+    top: 70px; background: var(--ui-brown); border: 6px solid var(--ui-brown-dark);
+    padding: 10px 18px; border-radius: 14px; font-size: 26px;
+  }
+  .foot-hint{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom: 26px; font-size: 20px;
+  }
+
+  /* Name page */
+  .name-box{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom: 80px; width: 880px; height: 66px;
+    background: var(--ui-brown);
+    border: 8px solid var(--ui-brown-dark);
+    border-radius: 20px;
+    display: grid; grid-template-columns: 220px 1fr; align-items: center;
+    padding: 0 16px; font-size: 26px;
+  }
+  .name-box .prompt{ opacity:.95; }
+  .name-box .typed{ color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Page visibility */
+  .page{ display: none; }
+  .page.show{ display: block; }
+  
+  /*Character Card*/
+  #page-name .char-card {
+   width: 260px;   /* bigger card */
+   height: 360px;
+   left: 80px;
+   bottom: 25px;
+  }
+  #page-name .char-grid {
+   width: 300px;   /* make container wider to allow bigger card */
+  }
+
+</style>
+</head>
+
+<body>
+<div class="stage-wrap">
+  <div class="stage" id="stage" tabindex="0" aria-label="Pixel RPG UI">
+
+    <!-- TITLE PAGE -->
+    <section class="page show" id="page-title" aria-label="Title Page">
+      <div class="card"></div>
+      <div class="title">GAME TITLE</div>
+
+      <div class="btn" id="btn-start" style="top: 260px;">START</div>
+      <div class="btn short" id="btn-credits" style="top: 340px;">CREDITS</div>
+      <div class="rock" id="btn-settings" title="Settings (Rock)"></div>
+
+      <div class="controls">
+        <div class="label">CONTROLS</div>
+        <div class="keys" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div></div><div class="key">W</div><div></div>
+        </div>
+        <div class="row">
+          <div class="key">A</div><div class="key">S</div><div class="key">D</div>
+        </div>
+        <div class="space">SPACE</div>
+      </div>
+    </section>
+
+    <!-- SETTINGS PAGE -->
+    <section class="page" id="page-settings" aria-label="Settings Page">
+      <div class="card"></div>
+      <div class="hdr">SETTINGS</div>
+      <div class="panel"></div>
+
+      <div class="slider" id="slider-vol" style="--y: 220px;">
+        <div class="label">VOLUME</div>
+        <div class="inner"></div>
+        <div class="knob" style="left: 20%;"></div>
+      </div>
+      <div class="slider" id="slider-bri" style="--y: 320px;">
+        <div class="label">BRIGHTNESS</div>
+        <div class="inner"></div>
+        <div class="knob" style="left: 40%;"></div>
+      </div>
+
+      <div class="foot-hint">W/S: SELECT SLIDER &nbsp;&nbsp; A/D: ADJUST &nbsp;&nbsp; SPACE: BACK</div>
+    </section>
+
+    <!-- CREDITS PAGE -->
+    <section class="page" id="page-credits" aria-label="Credits Page">
+      <div class="card"></div>
+      <div class="hdr">CREDITS</div>
+      <div class="panel">
+        <div class="cols">
+          <!-- LEFT COLUMN: story / editable text -->
+          <div class="col" id="credits-left">
+(Game Name) is a pixelated RPG adventure where you and
+your friends are transported into the world of Materials
+Science — exploring stress, strain, and strength through
+interactive challenges and retro-style gameplay inspired by
+Pokemon Deluge RPG.
+          </div>
+          <!-- RIGHT COLUMN: roles / editable text -->
+          <div class="col" id="credits-right">
+PROGRAMMERS & RESEARCHER
+  Sumampong
+  Aguanta
+  Mahusay
+
+VOICE ACTORS
+  Dabon .......... Mean Girl
+  Bungcaras ...... Jock
+  Esolana ........ Nerd
+  Rennier ........ Class Clown
+  Gines .......... Seismologist
+
+GRAPHICS
+  All Members
+          </div>
+        </div>
+        <div class="credits-foot">SUBMITTED TO: SIR SEAN POLICARPIO &nbsp;&nbsp; • &nbsp;&nbsp; PRESS SPACE TO GO BACK</div>
+      </div>
+    </section>
+
+    <!-- CHARACTER SELECT PAGE -->
+    <section class="page" id="page-characters" aria-label="Character Select">
+      <div class="card"></div>
+      <div class="char-hdr">CHOOSE YOUR CHARACTER</div>
+
+      <div class="char-grid">
+        <div class="char-card char-0" id="char0"></div>
+        <div class="char-card char-1" id="char1"></div>
+        <div class="char-card char-2" id="char2"></div>
+      </div>
+
+      <div class="foot-hint">A/D: SWITCH &nbsp;&nbsp; SPACE: ENTER</div>
+    </section>
+
+    <!-- NAME SELECT PAGE -->
+    <section class="page" id="page-name" aria-label="Name Selection">
+      <div class="card"></div>
+      <div class="char-hdr">CHOOSE YOUR CHARACTER</div>
+
+      <div class="char-grid" style="grid-template-columns: 1fr; width: 200px;">
+        <div class="char-card char-0" id="chosen-solo"></div>
+      </div>
+
+      <div class="name-box">
+        <div class="prompt">ENTER NAME:</div>
+        <div class="typed" id="typed-name"></div>
+      </div>
+
+      <div class="foot-hint">PRESS SPACE TO ENTER</div>
+    </section>
+
+    <!-- Placeholder after 1.5 -->
+    <section class="page" id="page-next">
+      <div class="card"></div>
+      <div class="title" style="top: 280px;">NEXT PAGE PLACEHOLDER</div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   JAVASCRIPT: STATE MACHINE + KEYBOARD CONTROLS (A/W/S/D/SPACE)
+   ========================================================== */
+
+/** Game states */
+const STATES = {
+  TITLE: "page-title",
+  SETTINGS: "page-settings",
+  CREDITS: "page-credits",
+  CHAR: "page-characters",
+  NAME: "page-name",
+  NEXT: "page-next"
+};
+
+const stage = document.getElementById("stage");
+stage.focus();
+
+/* Utility to show a page by id and hide others */
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("show"));
+  document.getElementById(id).classList.add("show");
+}
+
+/* Focus helpers for visual selection */
+function setBtnFocus(i){
+  startBtn.classList.toggle("focus", i===0);
+  creditsBtn.classList.toggle("focus", i===1);
+  settingsRock.classList.toggle("focus", i===2);
+}
+
+function setSliderFocus(i){
+  volSlider.classList.toggle("focus", i===0);
+  briSlider.classList.toggle("focus", i===1);
+}
+
+function setCharFocus(i){
+  [char0, char1, char2].forEach((el, idx) => el.classList.toggle("focus", idx===i));
+}
+
+/* ELEMENTS */
+const startBtn = document.getElementById("btn-start");
+const creditsBtn = document.getElementById("btn-credits");
+const settingsRock = document.getElementById("btn-settings");
+
+const volSlider = document.getElementById("slider-vol");
+const briSlider = document.getElementById("slider-bri");
+
+const char0 = document.getElementById("char0");
+const char1 = document.getElementById("char1");
+const char2 = document.getElementById("char2");
+const chosenSolo = document.getElementById("chosen-solo");
+
+const typedNameEl = document.getElementById("typed-name");
+
+/* STATE DATA */
+let current = STATES.TITLE;
+let titleFocus = 0;        // 0=start, 1=credits, 2=settings
+let settingsFocus = 0;     // 0=volume, 1=brightness
+let vol = 0.2;             // 0..1
+let bri = 0.4;             // 0..1 (affects CSS filter)
+let charIndex = 0;         // 0..2
+let typed = "";            // player name
+
+/* Apply initial highlights */
+setBtnFocus(titleFocus);
+setSliderFocus(settingsFocus);
+setCharFocus(charIndex);
+updateSliders();
+
+/* SLIDERS: update visuals and effects */
+function updateSliders(){
+  // knob positions are expressed as left % inside slider (accounting for knob width)
+  function setKnob(slider, value){
+    const inner = slider.querySelector(".inner");
+    const knob  = slider.querySelector(".knob");
+    const innerWidth = inner.getBoundingClientRect().width;
+    // Keep some padding so knob doesn't overflow edges
+    const leftPx = inner.offsetLeft + value*(innerWidth-60);
+    knob.style.left = `${Math.max(0, Math.min(slider.clientWidth-60, leftPx))}px`;
+  }
+  setKnob(volSlider, vol);
+  setKnob(briSlider, bri);
+
+  // brightness affects the bg filter via CSS variable on :root
+  document.documentElement.style.setProperty("--bg-brightness", (0.6 + bri*0.8).toFixed(2));
+}
+
+/* Character reflect for NAME page */
+function reflectChosen(){
+  // swap the background-image class for chosen
+  chosenSolo.className = "char-card char-" + charIndex;
+}
+
+/* KEYBOARD HANDLER */
+window.addEventListener("keydown", (e)=>{
+  // Prevent page scroll on arrow/space
+  if (["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) e.preventDefault();
+
+  // Map WASD/SPACE
+  const key = e.key.toLowerCase();
+
+  // NAME PAGE typing (accept printable other than our nav keys)
+  if (current === STATES.NAME){
+    if (key === " "){
+      // SPACE to proceed
+      showPage(STATES.NEXT);
+      current = STATES.NEXT;
+      return;
+    }
+    if (key === "backspace"){
+      typed = typed.slice(0, -1);
+      typedNameEl.textContent = typed;
+      return;
+    }
+    // normal character input (limit length)
+    if (e.key.length === 1 && typed.length < 16){
+      typed += e.key;
+      typedNameEl.textContent = typed;
+    }
+    return;
+  }
+
+  // Other pages: navigation only A/W/S/D + SPACE
+  switch (current){
+    case STATES.TITLE: {
+      if (["a","w"].includes(key)) {
+        titleFocus = (titleFocus + 2) % 3; // move backward
+        setBtnFocus(titleFocus);
+      }
+      if (["d","s"].includes(key)) {
+        titleFocus = (titleFocus + 1) % 3; // move forward
+        setBtnFocus(titleFocus);
+      }
+      if (key === " "){
+        if (titleFocus === 0) { // START
+          current = STATES.CHAR; showPage(current);
+        } else if (titleFocus === 1) { // CREDITS
+          current = STATES.CREDITS; showPage(current);
+        } else { // SETTINGS
+          current = STATES.SETTINGS; showPage(current);
+        }
+      }
+    } break;
+
+    case STATES.SETTINGS: {
+      if (key === "w") { settingsFocus = (settingsFocus + 1) % 2; setSliderFocus(settingsFocus); }
+      if (key === "s") { settingsFocus = (settingsFocus + 1) % 2; setSliderFocus(settingsFocus); }
+      if (key === "a") {
+        if (settingsFocus===0) vol = Math.max(0, vol - 0.05);
+        else                   bri = Math.max(0, bri - 0.05);
+        updateSliders();
+      }
+      if (key === "d") {
+        if (settingsFocus===0) vol = Math.min(1, vol + 0.05);
+        else                   bri = Math.min(1, bri + 0.05);
+        updateSliders();
+      }
+      if (key === " ") { current = STATES.TITLE; showPage(current); setBtnFocus(titleFocus); }
+    } break;
+
+    case STATES.CREDITS: {
+      if (key === " ") { current = STATES.TITLE; showPage(current); setBtnFocus(titleFocus); }
+    } break;
+
+    case STATES.CHAR: {
+      if (key === "a") { charIndex = (charIndex + 2) % 3; setCharFocus(charIndex); }
+      if (key === "d") { charIndex = (charIndex + 1) % 3; setCharFocus(charIndex); }
+      if (key === " ") {
+        reflectChosen();
+        typed = ""; typedNameEl.textContent = typed;
+        current = STATES.NAME; showPage(current);
+      }
+    } break;
+
+    case STATES.NEXT: {
+      // Placeholder: do nothing (or SPACE could cycle back)
+    } break;
+  }
+});
+
+/* Accessibility: keep keyboard focus on stage */
+stage.addEventListener("blur", ()=> stage.focus());
+</script>
+</body>
+</html>
